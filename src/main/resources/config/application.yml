@@ -1,0 +1,21 @@
+---
+infinispan:
+  cluster:
+    initialServer: localhost # Has to be overridden on start
+
+  remote:
+    primaryCacheName: main
+    secondaryCacheName: session
+
+memcached:
+  host: 0.0.0.0
+  idleTime: 2000
+  verbose: false
+  port:
+    primary : 11211
+    secondary: 11212
+
+server.port: 8090
+logging.level.root: INFO
+management.security.enabled: false
+endpoints.shutdown.enabled: true
