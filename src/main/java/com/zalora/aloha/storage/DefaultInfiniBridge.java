@@ -2,13 +2,14 @@ package com.zalora.aloha.storage;
 
 import com.zalora.aloha.memcached.MemcachedItem;
 import com.zalora.jmemcached.LocalCacheElement;
-import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.netty.buffer.ChannelBuffers;
+import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Hook up jMemcached and Infinispan
@@ -29,51 +30,63 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
     public LocalCacheElement get(Object key) {
         final String localKey = (String) key;
 
-        MetadataValue<MemcachedItem> ce = ispanCache.getWithMetadata(localKey);
-        if (ce == null || ce.getValue() == null) {
+        MetadataValue<MemcachedItem> metadataValue = ispanCache.getWithMetadata(localKey);
+        if (metadataValue == null || metadataValue.getValue() == null) {
             return null;
         }
 
-        return getLocalCacheElement(ce.getValue());
+        return createLocalCacheElement(metadataValue.getValue());
     }
 
     @Override
     public Collection<LocalCacheElement> getMulti(Set<String> keys) {
         return ispanCache.getAll(keys).entrySet().stream()
-            .map(entry -> getLocalCacheElement(entry.getValue()))
+            .map(entry -> createLocalCacheElement(entry.getValue()))
             .collect(Collectors.toList());
     }
 
     @Override
-    public LocalCacheElement put(String key, LocalCacheElement value) {
-        ispanCache.put(key, getMemcachedItem(value));
+    public LocalCacheElement put(String key, LocalCacheElement localCacheElement) {
+        ispanCache.put(
+            key, createMemcachedItem(localCacheElement), localCacheElement.getExpire(), TimeUnit.MILLISECONDS
+        );
+
         return null;
     }
 
     @Override
     public boolean remove(Object key, Object localCacheElement) {
-        return ispanCache.remove(key, getMemcachedItem((LocalCacheElement) localCacheElement));
+        return ispanCache.remove(key, createMemcachedItem((LocalCacheElement) localCacheElement));
     }
 
     @Override
     public boolean replace(String key, LocalCacheElement searchElement, LocalCacheElement replaceElement) {
-        return ispanCache.replace(key, getMemcachedItem(searchElement), getMemcachedItem(replaceElement));
+        return ispanCache.replace(
+            key, createMemcachedItem(searchElement), createMemcachedItem(replaceElement),
+            replaceElement.getExpire(), TimeUnit.MILLISECONDS
+        );
     }
 
     @Override
     public LocalCacheElement replace(String key, LocalCacheElement localCacheElement) {
-        ispanCache.replace(key, getMemcachedItem(localCacheElement));
+        ispanCache.replace(
+            key, createMemcachedItem(localCacheElement), localCacheElement.getExpire(), TimeUnit.MILLISECONDS
+        );
+
         return null;
     }
 
     @Override
-    public LocalCacheElement putIfAbsent(String key, LocalCacheElement value) {
-        ispanCache.putIfAbsent(key, getMemcachedItem(value));
+    public LocalCacheElement putIfAbsent(String key, LocalCacheElement localCacheElement) {
+        ispanCache.putIfAbsent(
+            key, createMemcachedItem(localCacheElement), localCacheElement.getExpire(), TimeUnit.MILLISECONDS
+        );
+
         return null;
     }
 
-    private LocalCacheElement getLocalCacheElement(MemcachedItem memcachedItem) {
-        LocalCacheElement localCacheElement =  new LocalCacheElement(
+    private LocalCacheElement createLocalCacheElement(MemcachedItem memcachedItem) {
+        LocalCacheElement localCacheElement = new LocalCacheElement(
             memcachedItem.getKey(), memcachedItem.getFlags(), memcachedItem.getExpire(), 0
         );
         localCacheElement.setData(ChannelBuffers.copiedBuffer(memcachedItem.getData()));
@@ -81,7 +94,7 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
         return localCacheElement;
     }
 
-    private MemcachedItem getMemcachedItem(LocalCacheElement lce) {
+    private MemcachedItem createMemcachedItem(LocalCacheElement lce) {
         byte[] data = new byte[lce.getData().capacity()];
         lce.getData().getBytes(0, data);
 

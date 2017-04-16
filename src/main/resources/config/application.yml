@@ -2,6 +2,7 @@
 infinispan:
   cluster:
     initialServer: localhost # Has to be overridden on start
+    name: Kamehameha
 
   remote:
     primaryCacheName: main

@@ -1,17 +1,13 @@
 package com.zalora.aloha.storage;
 
-import com.zalora.aloha.memcached.MemcachedItem;
 import com.zalora.jmemcached.LocalCacheElement;
 import com.zalora.jmemcached.storage.CacheStorage;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.springframework.util.Assert;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Hook up jMemcached and Infinispan
@@ -34,7 +30,7 @@ public abstract class AbstractInfiniBridge implements CacheStorage<String, Local
     }
 
     /**
-     * Number is wrong, but better than returning 0
+     * Return a rough estimate instead of zero
      */
     @Override
     public long getMemoryUsed() {
@@ -85,18 +81,14 @@ public abstract class AbstractInfiniBridge implements CacheStorage<String, Local
 
     @Override
     public LocalCacheElement remove(Object key) {
-        String localKey = (String) key;
-        Object result = ispanCache.remove(localKey);
-
-        if (result == null) {
-            return null;
-        }
-
-        return new LocalCacheElement(localKey);
+        ispanCache.remove((String) key);
+        return null;
     }
 
+    // The memcached protocol does not support those operations, so they're not implemented here
     @Override
-    public void putAll(Map<? extends String, ? extends LocalCacheElement> map) {}
+    public void putAll(Map<? extends String, ? extends LocalCacheElement> map) {
+    }
 
     @Override
     public Set<String> keySet() {

@@ -1,15 +1,14 @@
 package com.zalora.aloha.manager;
 
 import com.zalora.aloha.config.ClientConfig;
-
-import javax.annotation.PostConstruct;
-
 import com.zalora.aloha.memcached.MemcachedItem;
 import lombok.Getter;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 
 /**
  * @author Wolfram Huesken <wolfram.huesken@zalora.com>
