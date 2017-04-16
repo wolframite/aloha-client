@@ -16,7 +16,7 @@ memcached:
     primary : 11211
     secondary: 11212
 
-server.port: 8090
+server.port: 8080
 logging.level.root: INFO
 management.security.enabled: false
 endpoints.shutdown.enabled: true
