@@ -1,8 +1,13 @@
 ---
 infinispan:
   cluster:
+    mode: server # (cluster|server): Choose cluster if you > 1 server, server if you have a single server
     initialServer: localhost # Has to be overridden on start
     name: Kamehameha
+
+  cache:
+    enabled: false
+    maxEntries: 50000
 
   remote:
     primaryCacheName: main

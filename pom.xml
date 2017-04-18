@@ -6,7 +6,7 @@
 
     <groupId>com.zalora.shop</groupId>
     <artifactId>aloha-client</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.3</version>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
