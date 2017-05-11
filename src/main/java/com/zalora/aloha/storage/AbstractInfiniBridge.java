@@ -85,6 +85,14 @@ public abstract class AbstractInfiniBridge implements CacheStorage<String, Local
         return null;
     }
 
+    /**
+     * Only replace by key is in use
+     */
+    @Override
+    public boolean replace(String key, LocalCacheElement searchElement, LocalCacheElement replaceElement) {
+        return false;
+    }
+
     // The memcached protocol does not support those operations, so they're not implemented here
     @Override
     public void putAll(Map<? extends String, ? extends LocalCacheElement> map) {

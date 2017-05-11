@@ -11,7 +11,10 @@ infinispan:
 
   remote:
     primaryCacheName: main
+    primaryCompression: com.zalora.aloha.compressor.Lz4
+
     secondaryCacheName: session
+    secondaryCompression:
 
 memcached:
   host: 0.0.0.0

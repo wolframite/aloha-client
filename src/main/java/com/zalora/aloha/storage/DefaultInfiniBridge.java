@@ -1,5 +1,6 @@
 package com.zalora.aloha.storage;
 
+import com.zalora.aloha.compressor.Compressor;
 import com.zalora.aloha.memcached.MemcachedItem;
 import com.zalora.jmemcached.LocalCacheElement;
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +21,13 @@ import java.util.stream.Collectors;
 public class DefaultInfiniBridge extends AbstractInfiniBridge {
 
     private RemoteCache<String, MemcachedItem> ispanCache;
+    private Compressor compressor;
 
-    public DefaultInfiniBridge(RemoteCache<String, MemcachedItem> ispanCache) {
+    public DefaultInfiniBridge(RemoteCache<String, MemcachedItem> ispanCache, Compressor compressor) {
         super(ispanCache);
+
         this.ispanCache = ispanCache;
+        this.compressor = compressor;
     }
 
     @Override
@@ -35,22 +39,26 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
             return null;
         }
 
+        compressor.afterGet(metadataValue.getValue());
         return createLocalCacheElement(metadataValue.getValue());
     }
 
     @Override
     public Collection<LocalCacheElement> getMulti(Set<String> keys) {
         return ispanCache.getAll(keys).entrySet().stream()
-            .map(entry -> createLocalCacheElement(entry.getValue()))
+            .map(entry -> {
+                compressor.afterGet(entry.getValue());
+                return createLocalCacheElement(entry.getValue());
+            })
             .collect(Collectors.toList());
     }
 
     @Override
     public LocalCacheElement put(String key, LocalCacheElement localCacheElement) {
-        ispanCache.put(
-            key, createMemcachedItem(localCacheElement), localCacheElement.getExpire(), TimeUnit.MILLISECONDS
-        );
+        MemcachedItem memcachedItem = createMemcachedItem(localCacheElement);
+        compressor.beforePut(memcachedItem);
 
+        ispanCache.put(key, memcachedItem, localCacheElement.getExpire(), TimeUnit.MILLISECONDS);
         return null;
     }
 
@@ -60,28 +68,20 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
     }
 
     @Override
-    public boolean replace(String key, LocalCacheElement searchElement, LocalCacheElement replaceElement) {
-        return ispanCache.replace(
-            key, createMemcachedItem(searchElement), createMemcachedItem(replaceElement),
-            replaceElement.getExpire(), TimeUnit.MILLISECONDS
-        );
-    }
-
-    @Override
     public LocalCacheElement replace(String key, LocalCacheElement localCacheElement) {
-        ispanCache.replace(
-            key, createMemcachedItem(localCacheElement), localCacheElement.getExpire(), TimeUnit.MILLISECONDS
-        );
+        MemcachedItem memcachedItem = createMemcachedItem(localCacheElement);
+        compressor.beforePut(memcachedItem);
 
+        ispanCache.replace(key, memcachedItem, localCacheElement.getExpire(), TimeUnit.MILLISECONDS);
         return null;
     }
 
     @Override
     public LocalCacheElement putIfAbsent(String key, LocalCacheElement localCacheElement) {
-        ispanCache.putIfAbsent(
-            key, createMemcachedItem(localCacheElement), localCacheElement.getExpire(), TimeUnit.MILLISECONDS
-        );
+        MemcachedItem memcachedItem = createMemcachedItem(localCacheElement);
+        compressor.beforePut(memcachedItem);
 
+        ispanCache.putIfAbsent(key, memcachedItem, localCacheElement.getExpire(), TimeUnit.MILLISECONDS);
         return null;
     }
 
