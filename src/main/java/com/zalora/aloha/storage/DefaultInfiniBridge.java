@@ -98,7 +98,7 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
         byte[] data = new byte[lce.getData().capacity()];
         lce.getData().getBytes(0, data);
 
-        return new MemcachedItem(data, lce.getExpire(), lce.getFlags(), lce.getKey());
+        return new MemcachedItem(lce.getKey(), data, lce.getFlags(), lce.getExpire());
     }
 
 }

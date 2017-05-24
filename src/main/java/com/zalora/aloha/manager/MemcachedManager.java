@@ -3,14 +3,16 @@ package com.zalora.aloha.manager;
 import com.zalora.aloha.compressor.Compressor;
 import com.zalora.aloha.compressor.NoCompressor;
 import com.zalora.aloha.config.MemcachedConfig;
+import com.zalora.aloha.memcached.MemcachedItem;
 import com.zalora.aloha.storage.DefaultInfiniBridge;
 import com.zalora.jmemcached.*;
 import lombok.extern.slf4j.Slf4j;
+import org.infinispan.client.hotrod.RemoteCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
+import java.net.InetSocketAddress;
 import javax.annotation.PostConstruct;
 
 /**
@@ -22,8 +24,23 @@ public class MemcachedManager {
 
     private static final String DEFAULT_COMPRESSOR = "com.zalora.aloha.compressor.NoCompressor";
 
-    private final ClientManager clientManager;
-    private final MemcachedConfig memcachedConfig;
+    @Autowired
+    private ClientManager clientManager;
+
+    @Autowired
+    private MemcachedConfig memcachedConfig;
+
+    @Autowired
+    private InetSocketAddress mainSocketAddress;
+
+    @Autowired
+    private InetSocketAddress sessionSocketAddress;
+
+    @Autowired
+    private RemoteCache<String, MemcachedItem> mainCache;
+
+    @Autowired
+    private RemoteCache<String, MemcachedItem> sessionCache;
 
     @Value("${infinispan.remote.primaryCompression}")
     private String primaryCompressorClass;
@@ -34,47 +51,24 @@ public class MemcachedManager {
     private Compressor primaryCompressor;
     private Compressor secondaryCompressor;
 
-    @Autowired
-    public MemcachedManager(ClientManager clientManager, MemcachedConfig memcachedConfig) {
-        Assert.notNull(clientManager, "Infinispan Client Manager could not be loaded");
-        Assert.notNull(memcachedConfig, "Memcached Config could not be loaded");
-
-        Assert.notNull(
-            memcachedConfig.getPrimaryInetSocketAddress(),
-            "Main Memcached listen address is not configured"
-        );
-
-        Assert.notNull(
-            memcachedConfig.getSecondaryInetSocketAddress(),
-            "Session Memcached listen address is not configured"
-        );
-
-        this.clientManager = clientManager;
-        this.memcachedConfig = memcachedConfig;
-    }
-
     @PostConstruct
     public void init() {
         initCompressors();
 
         MemCacheDaemon<LocalCacheElement> mainMemcachedDaemon = new MemCacheDaemon<>();
-        mainMemcachedDaemon.setAddr(memcachedConfig.getPrimaryInetSocketAddress());
+        mainMemcachedDaemon.setAddr(mainSocketAddress);
         mainMemcachedDaemon.setIdleTime(memcachedConfig.getIdleTime());
         mainMemcachedDaemon.setVerbose(memcachedConfig.isVerbose());
-        mainMemcachedDaemon.setCache(new CacheImpl(new DefaultInfiniBridge(
-            clientManager.getPrimaryCache(), primaryCompressor
-        )));
+        mainMemcachedDaemon.setCache(new CacheImpl(new DefaultInfiniBridge(mainCache, primaryCompressor)));
 
         MemCacheDaemon<LocalCacheElement> sessionMemcachedDaemon = new MemCacheDaemon<>();
-        sessionMemcachedDaemon.setAddr(memcachedConfig.getSecondaryInetSocketAddress());
+        sessionMemcachedDaemon.setAddr(sessionSocketAddress);
         sessionMemcachedDaemon.setIdleTime(memcachedConfig.getIdleTime());
         sessionMemcachedDaemon.setVerbose(memcachedConfig.isVerbose());
-        sessionMemcachedDaemon.setCache(new CacheImpl(new DefaultInfiniBridge(
-            clientManager.getSecondaryCache(), secondaryCompressor
-        )));
+        sessionMemcachedDaemon.setCache(new CacheImpl(new DefaultInfiniBridge(sessionCache, secondaryCompressor)));
 
-        sessionMemcachedDaemon.start();
         mainMemcachedDaemon.start();
+        sessionMemcachedDaemon.start();
     }
 
     private void initCompressors() {

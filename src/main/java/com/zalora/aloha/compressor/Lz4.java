@@ -18,6 +18,7 @@ public class Lz4 implements Compressor {
 
     private static final long PHP_FLAG_STRING = 0;
     private static final long PHP_FLAG_LONG = 1;
+    private static final long PHP_FLAG_DOUBLE = 2;
     private static final long PHP_FLAG_PHP_SERIALIZED = 4;
     private static final long PHP_FLAG_JSON_SERIALIZED = 6;
 
@@ -26,7 +27,7 @@ public class Lz4 implements Compressor {
     private static final long ZCAST_FLAG_JSON_SERIALIZED = 4;
 
     private static final ImmutableList<Long> PHP_FLAGS = ImmutableList.of(
-        PHP_FLAG_STRING, PHP_FLAG_LONG, PHP_FLAG_PHP_SERIALIZED, PHP_FLAG_JSON_SERIALIZED
+        PHP_FLAG_STRING, PHP_FLAG_LONG, PHP_FLAG_DOUBLE, PHP_FLAG_PHP_SERIALIZED, PHP_FLAG_JSON_SERIALIZED
     );
 
     private static final ImmutableMap<Long, Long> ZCAST_PHP_FLAGS_MAP = ImmutableMap.of(
@@ -121,6 +122,7 @@ public class Lz4 implements Compressor {
 
     /**
      * As the last 3 bits are reserved for the data type, we can kick them out by shifting 3 bits to the right
+     *
      * @param flag encoded flag
      * @return the uncompressed size in bytes
      */
@@ -130,6 +132,7 @@ public class Lz4 implements Compressor {
 
     /**
      * Magic number 7 leaves the last 3 bits intact
+     *
      * @param flag encoded flag
      * @return return the data type set by PHP
      */
@@ -145,7 +148,8 @@ public class Lz4 implements Compressor {
 
     /**
      * Encode uncompressed size and data type with a bitmask (3 bit for 3 datatypes)
-     * @param flag The current flag set by php-memcached
+     *
+     * @param flag   The current flag set by php-memcached
      * @param length The uncompressed length we want to preserve
      * @return the encoded result
      */

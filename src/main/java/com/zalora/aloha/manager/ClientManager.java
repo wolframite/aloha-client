@@ -2,13 +2,12 @@ package com.zalora.aloha.manager;
 
 import com.zalora.aloha.config.ClientConfig;
 import com.zalora.aloha.memcached.MemcachedItem;
-import lombok.Getter;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 
 /**
  * @author Wolfram Huesken <wolfram.huesken@zalora.com>
@@ -16,22 +15,27 @@ import javax.annotation.PostConstruct;
 @Component
 public class ClientManager {
 
-    @Getter
-    private RemoteCacheManager remoteCacheManager;
+    private final ClientConfig clientConfig;
+    private final Configuration hotrodConfig;
 
     @Autowired
-    private ClientConfig clientConfig;
-
-    @PostConstruct
-    public void init() {
-        remoteCacheManager = new RemoteCacheManager(clientConfig.getHotrodConfiguration());
+    public ClientManager(Configuration hotrodConfig, ClientConfig clientConfig) {
+        this.hotrodConfig = hotrodConfig;
+        this.clientConfig = clientConfig;
     }
 
-    public RemoteCache<String, MemcachedItem> getPrimaryCache() {
+    @Bean
+    public RemoteCacheManager remoteCacheManager() {
+        return new RemoteCacheManager(hotrodConfig);
+    }
+
+    @Bean
+    public RemoteCache<String, MemcachedItem> mainCache(RemoteCacheManager remoteCacheManager) {
         return remoteCacheManager.getCache(clientConfig.getPrimaryCacheName());
     }
 
-    public RemoteCache<String, MemcachedItem> getSecondaryCache() {
+    @Bean
+    public RemoteCache<String, MemcachedItem> sessionCache(RemoteCacheManager remoteCacheManager) {
         return remoteCacheManager.getCache(clientConfig.getSecondaryCacheName());
     }
 

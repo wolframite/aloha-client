@@ -1,7 +1,7 @@
 package com.zalora.aloha.memcached;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.io.Serializable;
 
 /**
@@ -9,23 +9,17 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class MemcachedItem implements Serializable {
 
     private static final long serialVersionUID = 7503234879985469265L;
 
-    private byte[] data;
-    private long expire;
-    private long flags;
     private String key;
+    private byte[] data;
+    private long flags;
+    private long expire;
 
     public MemcachedItem(String key) {
-        this.key = key;
-    }
-
-    public MemcachedItem(byte[] data, long expire, long flags, String key) {
-        this.data = data;
-        this.expire = expire;
-        this.flags = flags;
         this.key = key;
     }
 

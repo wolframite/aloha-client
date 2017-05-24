@@ -2,6 +2,7 @@ package com.zalora.aloha.config;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import java.net.InetSocketAddress;
 
@@ -12,12 +13,6 @@ import javax.annotation.PostConstruct;
  */
 @Component
 public class MemcachedConfig {
-
-    @Getter
-    private InetSocketAddress primaryInetSocketAddress;
-
-    @Getter
-    private InetSocketAddress secondaryInetSocketAddress;
 
     @Value("${memcached.host}")
     private String host;
@@ -36,10 +31,14 @@ public class MemcachedConfig {
     @Value("${memcached.verbose}")
     private boolean verbose;
 
-    @PostConstruct
-    public void init() {
-        primaryInetSocketAddress = new InetSocketAddress(host, primaryPort);
-        secondaryInetSocketAddress = new InetSocketAddress(host, secondaryPort);
+    @Bean
+    public InetSocketAddress mainSocketAddress() {
+        return new InetSocketAddress(host, primaryPort);
+    }
+
+    @Bean
+    public InetSocketAddress sessionSocketAddress() {
+        return new InetSocketAddress(host, secondaryPort);
     }
 
 }

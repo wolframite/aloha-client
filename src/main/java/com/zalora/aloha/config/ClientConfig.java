@@ -6,9 +6,9 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 
 /**
  * @author Wolfram Huesken <wolfram.huesken@zalora.com>
@@ -18,9 +18,6 @@ import javax.annotation.PostConstruct;
 public class ClientConfig {
 
     private static final String MODE_CLUSTER = "cluster";
-
-    @Getter
-    private Configuration hotrodConfiguration;
 
     @Value("${infinispan.cluster.name}")
     private String clusterName;
@@ -45,8 +42,8 @@ public class ClientConfig {
     @Value("${infinispan.remote.secondaryCacheName}")
     private String secondaryCacheName;
 
-    @PostConstruct
-    public void init() {
+    @Bean
+    public Configuration hotrodConfig() {
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 
         // Cluster Mode
@@ -63,7 +60,7 @@ public class ClientConfig {
                 .maxEntries(maxEntries);
         }
 
-        hotrodConfiguration = configurationBuilder.build();
+        return configurationBuilder.build();
     }
 
 }
