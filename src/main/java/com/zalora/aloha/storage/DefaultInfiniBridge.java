@@ -4,7 +4,6 @@ import com.zalora.aloha.compressor.Compressor;
 import com.zalora.aloha.memcached.MemcachedItem;
 import com.zalora.jmemcached.LocalCacheElement;
 import lombok.extern.slf4j.Slf4j;
-import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.netty.buffer.ChannelBuffers;
 import java.util.Collection;
@@ -32,15 +31,13 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
 
     @Override
     public LocalCacheElement get(Object key) {
-        final String localKey = (String) key;
-
-        MetadataValue<MemcachedItem> metadataValue = ispanCache.getWithMetadata(localKey);
-        if (metadataValue == null || metadataValue.getValue() == null) {
+        MemcachedItem item = ispanCache.get((String) key);
+        if (item == null) {
             return null;
         }
 
-        compressor.afterGet(metadataValue.getValue());
-        return createLocalCacheElement(metadataValue.getValue());
+        compressor.afterGet(item);
+        return createLocalCacheElement(item);
     }
 
     @Override
@@ -49,8 +46,7 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
             .map(entry -> {
                 compressor.afterGet(entry.getValue());
                 return createLocalCacheElement(entry.getValue());
-            })
-            .collect(Collectors.toList());
+            }).collect(Collectors.toList());
     }
 
     @Override
@@ -58,13 +54,19 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
         MemcachedItem memcachedItem = createMemcachedItem(localCacheElement);
         compressor.beforePut(memcachedItem);
 
-        ispanCache.put(key, memcachedItem, localCacheElement.getExpire(), TimeUnit.MILLISECONDS);
+        if (localCacheElement.getExpire() > 0) {
+            ispanCache.put(key, memcachedItem, localCacheElement.getExpire(), TimeUnit.MILLISECONDS);
+            return null;
+        }
+
+        ispanCache.put(key, memcachedItem);
         return null;
     }
 
     @Override
     public boolean remove(Object key, Object localCacheElement) {
-        return ispanCache.remove(key, createMemcachedItem((LocalCacheElement) localCacheElement));
+        ispanCache.removeAsync(key, createMemcachedItem((LocalCacheElement) localCacheElement));
+        return true;
     }
 
     @Override
@@ -93,7 +95,12 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
         MemcachedItem memcachedItem = createMemcachedItem(localCacheElement);
         compressor.beforePut(memcachedItem);
 
-        ispanCache.putIfAbsent(key, memcachedItem, localCacheElement.getExpire(), TimeUnit.MILLISECONDS);
+        if (localCacheElement.getExpire() > 0) {
+            ispanCache.putIfAbsent(key, memcachedItem, localCacheElement.getExpire(), TimeUnit.MILLISECONDS);
+            return null;
+        }
+
+        ispanCache.putIfAbsent(key, memcachedItem);
         return null;
     }
 

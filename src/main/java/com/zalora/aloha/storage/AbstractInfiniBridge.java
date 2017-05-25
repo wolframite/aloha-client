@@ -81,7 +81,7 @@ public abstract class AbstractInfiniBridge implements CacheStorage<String, Local
 
     @Override
     public LocalCacheElement remove(Object key) {
-        ispanCache.remove((String) key);
+        ispanCache.removeAsync((String) key);
         return null;
     }
 
