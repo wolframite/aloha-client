@@ -1,6 +1,5 @@
 package com.zalora.jmemcached;
 
-import com.zalora.jmemcached.protocol.binary.MemcachedBinaryPipelineFactory;
 import com.zalora.jmemcached.protocol.text.MemcachedPipelineFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -53,12 +52,7 @@ public class MemCacheDaemon<CACHE_ELEMENT extends CacheElement> {
         allChannels = new DefaultChannelGroup("jmemcachedChannelGroup");
 
         ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
-
-        ChannelPipelineFactory pipelineFactory;
-        if (binary)
-            pipelineFactory = createMemcachedBinaryPipelineFactory(cache, memcachedVersion, verbose, idleTime, allChannels);
-        else
-            pipelineFactory = createMemcachedPipelineFactory(cache, memcachedVersion, verbose, idleTime, frameSize, allChannels);
+        ChannelPipelineFactory pipelineFactory = createMemcachedPipelineFactory(cache, memcachedVersion, verbose, idleTime, frameSize, allChannels);
 
         bootstrap.setPipelineFactory(pipelineFactory);
         bootstrap.setOption("sendBufferSize", 65536);
@@ -70,11 +64,6 @@ public class MemCacheDaemon<CACHE_ELEMENT extends CacheElement> {
         log.info("Listening on " + String.valueOf(addr.getHostName()) + ":" + addr.getPort());
 
         running = true;
-    }
-
-    protected ChannelPipelineFactory createMemcachedBinaryPipelineFactory(
-        Cache cache, String memcachedVersion, boolean verbose, int idleTime, DefaultChannelGroup allChannels) {
-        return new MemcachedBinaryPipelineFactory(cache, memcachedVersion, verbose, idleTime, allChannels);
     }
 
     protected ChannelPipelineFactory createMemcachedPipelineFactory(
