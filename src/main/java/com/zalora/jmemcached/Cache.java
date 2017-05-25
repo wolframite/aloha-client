@@ -76,6 +76,14 @@ public interface Cache<CACHE_ELEMENT extends CacheElement> {
     Integer get_add(String key, int mod);
 
     /**
+     * Touching an existing item changes the expiration to the given value
+     * @param key the key to touch
+     * @param expire expiration in milliseconds
+     * @return Touch reponse
+     */
+    TouchResponse touch(String key, long expire);
+
+    /**
      * Get element(s) from the cache
      *
      * @param keys the key for the element to lookup
@@ -162,4 +170,10 @@ public interface Cache<CACHE_ELEMENT extends CacheElement> {
         DELETED, NOT_FOUND
     }
 
+    /**
+     * Response for touch command
+     */
+    enum TouchResponse {
+        TOUCHED, NOT_FOUND
+    }
 }

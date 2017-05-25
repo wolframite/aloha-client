@@ -27,6 +27,7 @@ public final class MemcachedResponseEncoder<CACHE_ELEMENT extends CacheElement> 
     private static final ChannelBuffer NOT_STORED = ChannelBuffers.copiedBuffer("NOT_STORED\r\n", MemcachedPipelineFactory.USASCII);
     private static final ChannelBuffer STORED = ChannelBuffers.copiedBuffer("STORED\r\n", MemcachedPipelineFactory.USASCII);
     private static final ChannelBuffer DELETED = ChannelBuffers.copiedBuffer("DELETED\r\n", MemcachedPipelineFactory.USASCII);
+    private static final ChannelBuffer TOUCHED = ChannelBuffers.copiedBuffer("TOUCHED\r\n", MemcachedPipelineFactory.USASCII);
     private static final ChannelBuffer END = ChannelBuffers.copiedBuffer("END\r\n", MemcachedPipelineFactory.USASCII);
     private static final ChannelBuffer OK = ChannelBuffers.copiedBuffer("OK\r\n", MemcachedPipelineFactory.USASCII);
     private static final ChannelBuffer ERROR = ChannelBuffers.copiedBuffer("ERROR\r\n", MemcachedPipelineFactory.USASCII);
@@ -101,6 +102,9 @@ public final class MemcachedResponseEncoder<CACHE_ELEMENT extends CacheElement> 
                     Channels.write(channel, deleteResponseString(command.deleteResponse));
                 }
                 break;
+            case TOUCH:
+                Channels.write(channel, touchResponseString(command.touchResponse));
+                break;
             case DECR:
             case INCR:
                 if (!command.cmd.noreply)
@@ -145,6 +149,14 @@ public final class MemcachedResponseEncoder<CACHE_ELEMENT extends CacheElement> 
     private ChannelBuffer deleteResponseString(Cache.DeleteResponse deleteResponse) {
         if (deleteResponse == Cache.DeleteResponse.DELETED) return DELETED.duplicate();
         else return NOT_FOUND.duplicate();
+    }
+
+    private ChannelBuffer touchResponseString(Cache.TouchResponse touchResponse) {
+        if (touchResponse == Cache.TouchResponse.TOUCHED) {
+            return TOUCHED.duplicate();
+        }
+
+        return NOT_FOUND.duplicate();
     }
 
     private ChannelBuffer incrDecrResponseString(Integer ret) {

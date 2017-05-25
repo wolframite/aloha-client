@@ -19,6 +19,7 @@ public final class ResponseMessage<CACHE_ELEMENT extends CacheElement> implement
     public Map<String, Set<String>> stats;
     public String version;
     public Cache.DeleteResponse deleteResponse;
+    public Cache.TouchResponse touchResponse;
     public Integer incrDecrResponse;
     public boolean flushSuccess;
 
@@ -37,21 +38,23 @@ public final class ResponseMessage<CACHE_ELEMENT extends CacheElement> implement
         return this;
     }
 
+    public ResponseMessage<CACHE_ELEMENT> withTouchResponse(Cache.TouchResponse touchResponse) {
+        this.touchResponse = touchResponse;
+        return this;
+    }
+
     public ResponseMessage<CACHE_ELEMENT> withIncrDecrResponse(Integer incrDecrResp) {
         this.incrDecrResponse = incrDecrResp;
-
         return this;
     }
 
     public ResponseMessage<CACHE_ELEMENT> withStatResponse(Map<String, Set<String>> stats) {
         this.stats = stats;
-
         return this;
     }
 
     public ResponseMessage<CACHE_ELEMENT> withFlushResponse(boolean success) {
         this.flushSuccess = success;
-
         return this;
     }
 

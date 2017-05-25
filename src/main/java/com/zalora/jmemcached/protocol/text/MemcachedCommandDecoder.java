@@ -179,6 +179,15 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
                     cmd.noreply = true;
 
                 return cmd;
+            case TOUCH:
+                if (numParts != 3) {
+                    throw new MalformedCommandException("invalid touch command");
+                }
+
+                cmd.setKey(parts.get(1));
+                cmd.expire = BufferUtils.atol(parts.get(MIN_BYTES_LINE)) * 1000L;
+
+                return cmd;
             case APPEND:
             case PREPEND:
             case REPLACE:

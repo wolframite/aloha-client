@@ -33,7 +33,8 @@ public class MemCacheDaemon<CACHE_ELEMENT extends CacheElement> {
     private ServerSocketChannelFactory channelFactory;
     private DefaultChannelGroup allChannels;
 
-    public MemCacheDaemon() {}
+    public MemCacheDaemon() {
+    }
 
     public MemCacheDaemon(Cache<CACHE_ELEMENT> cache) {
         this.cache = cache;
@@ -44,10 +45,9 @@ public class MemCacheDaemon<CACHE_ELEMENT extends CacheElement> {
      */
     public void start() {
         // TODO provide tweakable options here for passing in custom executors.
-        channelFactory =
-                new NioServerSocketChannelFactory(
-                        Executors.newCachedThreadPool(),
-                        Executors.newCachedThreadPool());
+        channelFactory = new NioServerSocketChannelFactory(
+            Executors.newCachedThreadPool(), Executors.newCachedThreadPool()
+        );
 
         allChannels = new DefaultChannelGroup("jmemcachedChannelGroup");
 

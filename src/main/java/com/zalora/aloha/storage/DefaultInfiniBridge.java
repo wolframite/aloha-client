@@ -77,6 +77,18 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
     }
 
     @Override
+    public boolean touch(String key, long expire) {
+        MemcachedItem item = ispanCache.get(key);
+        if (item == null) {
+            return false;
+        }
+
+        item.setExpire(expire);
+        ispanCache.replace(key, item, expire, TimeUnit.MILLISECONDS);
+        return true;
+    }
+
+    @Override
     public LocalCacheElement putIfAbsent(String key, LocalCacheElement localCacheElement) {
         MemcachedItem memcachedItem = createMemcachedItem(localCacheElement);
         compressor.beforePut(memcachedItem);

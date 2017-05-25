@@ -20,6 +20,7 @@ public final class CommandMessage<CACHE_ELEMENT extends CacheElement> implements
     public int time = 0;
     public int opaque;
     public boolean addKeyToResponse = false;
+    public long expire;
 
     public int incrExpiry;
     public int incrAmount;
@@ -30,12 +31,12 @@ public final class CommandMessage<CACHE_ELEMENT extends CacheElement> implements
     }
 
     public void setKey(ChannelBuffer key) {
-        this.keys = new ArrayList<String>();
+        this.keys = new ArrayList<>();
         this.keys.add(key.toString(Charset.forName("UTF-8")));
     }
 
     public void setKeys(List<ChannelBuffer> keys) {
-        this.keys = new ArrayList<String>(keys.size());
+        this.keys = new ArrayList<>(keys.size());
         for (ChannelBuffer key : keys) {
             this.keys.add(key.toString(Charset.forName("UTF-8")));
         }

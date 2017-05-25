@@ -1,9 +1,8 @@
 package com.zalora.jmemcached;
 
 import com.zalora.jmemcached.util.BufferUtils;
-import lombok.Getter;
+import lombok.*;
 import org.jboss.netty.buffer.*;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
 /**
@@ -15,7 +14,7 @@ public final class LocalCacheElement implements CacheElement {
 
     private ChannelBuffer data;
 
-    @Getter
+    @Getter @Setter
     private long expire;
 
     @Getter
@@ -25,11 +24,6 @@ public final class LocalCacheElement implements CacheElement {
     private String key;
 
     private long casUnique = 0L;
-    private boolean blocked = false;
-    private long blockedUntil;
-
-    public LocalCacheElement() {
-    }
 
     public LocalCacheElement(String key) {
         this.key = key;
@@ -69,8 +63,6 @@ public final class LocalCacheElement implements CacheElement {
         in.skipBytes(dataLength);
 
         localCacheElement.casUnique = in.readInt();
-        localCacheElement.blocked = in.readByte() == 1;
-        localCacheElement.blockedUntil = in.readLong();
 
         return localCacheElement;
     }
@@ -146,8 +138,6 @@ public final class LocalCacheElement implements CacheElement {
 
         LocalCacheElement that = (LocalCacheElement) o;
 
-        if (blocked != that.blocked) return false;
-        if (blockedUntil != that.blockedUntil) return false;
         if (casUnique != that.casUnique) return false;
         if (expire != that.expire) return false;
         if (flags != that.flags) return false;
@@ -164,8 +154,6 @@ public final class LocalCacheElement implements CacheElement {
         result = 31 * result + (data != null ? data.hashCode() : 0);
         result = 31 * result + (key != null ? key.hashCode() : 0);
         result = 31 * result + (int) (casUnique ^ (casUnique >>> 32));
-        result = 31 * result + (blocked ? 1 : 0);
-        result = 31 * result + (int) (blockedUntil ^ (blockedUntil >>> 32));
         return result;
     }
 
@@ -187,41 +175,11 @@ public final class LocalCacheElement implements CacheElement {
         this.casUnique = casUnique;
     }
 
-    public boolean isBlocked() {
-        return blocked;
-    }
-
-    public long getBlockedUntil() {
-        return blockedUntil;
-    }
-
-    public void block(long blockedUntil) {
-        this.blocked = true;
-        this.blockedUntil = blockedUntil;
-    }
-
-    public int bufferSize() {
-        return 4 + 8 + 4 + key.length() + 4 + 4 + 4 + key.length() + 8 + 1 + 8;
-    }
-
-    public void writeToBuffer(ChannelBuffer out) throws UnsupportedEncodingException {
-        out.writeInt(bufferSize());
-        out.writeLong(expire);
-        out.writeInt(key.length());
-        out.writeBytes(key.getBytes("UTF-8"));
-        out.writeLong(flags);
-        out.writeInt(data.capacity());
-        out.writeBytes(data);
-        out.writeLong(casUnique);
-        out.writeByte(blocked ? 1 : 0);
-        out.writeLong(blockedUntil);
-    }
-
-    public static class IncrDecrResult {
+    static class IncrDecrResult {
         int oldValue;
         LocalCacheElement replace;
 
-        public IncrDecrResult(int oldValue, LocalCacheElement replace) {
+        IncrDecrResult(int oldValue, LocalCacheElement replace) {
             this.oldValue = oldValue;
             this.replace = replace;
         }

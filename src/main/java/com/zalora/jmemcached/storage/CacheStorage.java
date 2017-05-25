@@ -29,6 +29,14 @@ public interface CacheStorage<K, V extends SizedItem> extends ConcurrentMap<K, V
     int capacity();
 
     /**
+     *
+     * @param key
+     * @param expire
+     * @return
+     */
+    boolean touch(String key, long expire);
+
+    /**
      * Close the storage unit, deallocating any resources it might be currently holding.
      *
      * @throws IOException thrown if IO faults occur anywhere during close.

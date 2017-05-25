@@ -15,8 +15,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * for the entire daemon.
  * <p/>
  * The command handler produces ResponseMessages which are destined for the response encoder.
- *
+ * <p>
  * TODO implement flush_all delay
+ *
  * @author Ryan Daum
  */
 @ChannelHandler.Sharable
@@ -93,9 +94,8 @@ public final class MemcachedCommandHandler<CACHE_ELEMENT extends CacheElement> e
         channelGroup.remove(channelHandlerContext.getChannel());
     }
 
-
     /**
-     * The actual meat of the matter.  Turn CommandMessages into executions against the physical cache, and then
+     * The actual meat of the matter. Turn CommandMessages into executions against the physical cache, and then
      * pass on the downstream messages.
      *
      * @param channelHandlerContext
@@ -129,57 +129,62 @@ public final class MemcachedCommandHandler<CACHE_ELEMENT extends CacheElement> e
         }
 
         Channel channel = messageEvent.getChannel();
-        if (cmd == null) handleNoOp(channelHandlerContext, command);
-        else
-        switch (cmd) {
-            case GET:
-            case GETS:
-                handleGets(channelHandlerContext, command, channel);
-                break;
-            case APPEND:
-                handleAppend(channelHandlerContext, command, channel);
-                break;
-            case PREPEND:
-                handlePrepend(channelHandlerContext, command, channel);
-                break;
-            case DELETE:
-                handleDelete(channelHandlerContext, command, channel);
-                break;
-            case DECR:
-                handleDecr(channelHandlerContext, command, channel);
-                break;
-            case INCR:
-                handleIncr(channelHandlerContext, command, channel);
-                break;
-            case REPLACE:
-                handleReplace(channelHandlerContext, command, channel);
-                break;
-            case ADD:
-                handleAdd(channelHandlerContext, command, channel);
-                break;
-            case SET:
-                handleSet(channelHandlerContext, command, channel);
-                break;
-            case CAS:
-                handleCas(channelHandlerContext, command, channel);
-                break;
-            case STATS:
-                handleStats(channelHandlerContext, command, cmdKeysSize, channel);
-                break;
-            case VERSION:
-                handleVersion(channelHandlerContext, command, channel);
-                break;
-            case QUIT:
-                handleQuit(channel);
-                break;
-            case FLUSH_ALL:
-                handleFlush(channelHandlerContext, command, channel);
-                break;
-            case VERBOSITY:
-                handleVerbosity(channelHandlerContext, command, channel);
-                break;
-            default:
-                 throw new UnknownCommandException("unknown command");
+        if (cmd == null) {
+            handleNoOp(channelHandlerContext, command);
+        } else {
+            switch (cmd) {
+                case GET:
+                case GETS:
+                    handleGets(channelHandlerContext, command, channel);
+                    break;
+                case APPEND:
+                    handleAppend(channelHandlerContext, command, channel);
+                    break;
+                case PREPEND:
+                    handlePrepend(channelHandlerContext, command, channel);
+                    break;
+                case TOUCH:
+                    handleTouch(channelHandlerContext, command, channel);
+                    break;
+                case DELETE:
+                    handleDelete(channelHandlerContext, command, channel);
+                    break;
+                case DECR:
+                    handleDecr(channelHandlerContext, command, channel);
+                    break;
+                case INCR:
+                    handleIncr(channelHandlerContext, command, channel);
+                    break;
+                case REPLACE:
+                    handleReplace(channelHandlerContext, command, channel);
+                    break;
+                case ADD:
+                    handleAdd(channelHandlerContext, command, channel);
+                    break;
+                case SET:
+                    handleSet(channelHandlerContext, command, channel);
+                    break;
+                case CAS:
+                    handleCas(channelHandlerContext, command, channel);
+                    break;
+                case STATS:
+                    handleStats(channelHandlerContext, command, cmdKeysSize, channel);
+                    break;
+                case VERSION:
+                    handleVersion(channelHandlerContext, command, channel);
+                    break;
+                case QUIT:
+                    handleQuit(channel);
+                    break;
+                case FLUSH_ALL:
+                    handleFlush(channelHandlerContext, command, channel);
+                    break;
+                case VERBOSITY:
+                    handleVerbosity(channelHandlerContext, command, channel);
+                    break;
+                default:
+                    throw new UnknownCommandException("unknown command");
+            }
         }
     }
 
@@ -190,11 +195,11 @@ public final class MemcachedCommandHandler<CACHE_ELEMENT extends CacheElement> e
     protected void handleFlush(ChannelHandlerContext channelHandlerContext, CommandMessage<CACHE_ELEMENT> command, Channel channel) {
         Channels.fireMessageReceived(channelHandlerContext, new ResponseMessage(command).withFlushResponse(cache.flush_all(command.time)), channel.getRemoteAddress());
     }
-    
+
     protected void handleVerbosity(ChannelHandlerContext channelHandlerContext, CommandMessage command, Channel channel) {
-    	//TODO set verbosity mode
-    	Channels.fireMessageReceived(channelHandlerContext, new ResponseMessage(command), channel.getRemoteAddress());
- 	}
+        //TODO set verbosity mode
+        Channels.fireMessageReceived(channelHandlerContext, new ResponseMessage(command), channel.getRemoteAddress());
+    }
 
     protected void handleQuit(Channel channel) {
         channel.disconnect();
@@ -213,6 +218,11 @@ public final class MemcachedCommandHandler<CACHE_ELEMENT extends CacheElement> e
         }
 
         Channels.fireMessageReceived(channelHandlerContext, new ResponseMessage(command).withStatResponse(cache.stat(option)), channel.getRemoteAddress());
+    }
+
+    protected void handleTouch(ChannelHandlerContext channelHandlerContext, CommandMessage<CACHE_ELEMENT> command, Channel channel) {
+        Cache.TouchResponse tr = cache.touch(command.keys.get(0), command.expire);
+        Channels.fireMessageReceived(channelHandlerContext, new ResponseMessage(command).withTouchResponse(tr), channel.getRemoteAddress());
     }
 
     protected void handleDelete(ChannelHandlerContext channelHandlerContext, CommandMessage<CACHE_ELEMENT> command, Channel channel) {

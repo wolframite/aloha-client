@@ -9,8 +9,6 @@ import java.io.Serializable;
  */
 public interface CacheElement extends Serializable, SizedItem {
 
-    public final static long THIRTY_DAYS = 2592000000L;
-
     int size();
 
     int hashCode();
@@ -28,12 +26,6 @@ public interface CacheElement extends Serializable, SizedItem {
     long getCasUnique();
 
     void setCasUnique(long casUnique);
-
-    boolean isBlocked();
-
-    void block(long blockedUntil);
-
-    long getBlockedUntil();
 
     CacheElement append(LocalCacheElement element);
 

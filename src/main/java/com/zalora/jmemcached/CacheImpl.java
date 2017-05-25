@@ -26,11 +26,11 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
      * Handle the deletion of an item from the cache.
      * Infinispan client doesn't return the object, but null to save network I/O
      * So we cannot determine if the delete actually worked and just hope for the best :-)
-     * The original
      *
-     * @param key  the key for the item
+     * @param key the key for the item
      * @return the message response
      */
+    @Override
     public DeleteResponse delete(String key) {
         storage.remove(key);
         return DeleteResponse.DELETED;
@@ -39,6 +39,19 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
     /**
      * @inheritDoc
      */
+    @Override
+    public TouchResponse touch(String key, long expire) {
+        if (storage.touch(key, expire)) {
+            return TouchResponse.TOUCHED;
+        }
+
+        return TouchResponse.NOT_FOUND;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
     public StoreResponse add(LocalCacheElement e) {
         final long origCasUnique = e.getCasUnique();
         e.setCasUnique(casCounter.getAndIncrement());
@@ -53,6 +66,7 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
     /**
      * @inheritDoc
      */
+    @Override
     public StoreResponse replace(LocalCacheElement e) {
         return storage.replace(e.getKey(), e) != null ? StoreResponse.STORED : StoreResponse.NOT_STORED;
     }
@@ -60,9 +74,10 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
     /**
      * @inheritDoc
      */
+    @Override
     public StoreResponse append(LocalCacheElement element) {
         LocalCacheElement old = storage.get(element.getKey());
-        if (old == null || isBlocked(old)) {
+        if (old == null) {
             getMisses.incrementAndGet();
             return StoreResponse.NOT_FOUND;
         } else {
@@ -73,9 +88,10 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
     /**
      * @inheritDoc
      */
+    @Override
     public StoreResponse prepend(LocalCacheElement element) {
         LocalCacheElement old = storage.get(element.getKey());
-        if (old == null || isBlocked(old)) {
+        if (old == null) {
             getMisses.incrementAndGet();
             return StoreResponse.NOT_FOUND;
         } else {
@@ -86,6 +102,7 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
     /**
      * @inheritDoc
      */
+    @Override
     public StoreResponse set(LocalCacheElement e) {
         setCmds.incrementAndGet();//update stats
         e.setCasUnique(casCounter.getAndIncrement());
@@ -97,10 +114,11 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
     /**
      * @inheritDoc
      */
+    @Override
     public StoreResponse cas(Long cas_key, LocalCacheElement e) {
         // have to get the element
         LocalCacheElement element = storage.get(e.getKey());
-        if (element == null || isBlocked(element)) {
+        if (element == null) {
             getMisses.incrementAndGet();
             return StoreResponse.NOT_FOUND;
         }
@@ -122,9 +140,10 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
     /**
      * @inheritDoc
      */
+    @Override
     public Integer get_add(String key, int mod) {
         LocalCacheElement old = storage.get(key);
-        if (old == null || isBlocked(old)) {
+        if (old == null) {
             getMisses.incrementAndGet();
             return null;
         } else {
@@ -133,13 +152,10 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
         }
     }
 
-    protected boolean isBlocked(CacheElement e) {
-        return e.isBlocked() && e.getBlockedUntil() > Now();
-    }
-
     /**
      * @inheritDoc
      */
+    @Override
     public LocalCacheElement[] get(String... keys) {
         getCmds.incrementAndGet(); //updates stats
 
@@ -161,7 +177,7 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
 
         for (String key : keys) {
             LocalCacheElement e = storage.get(key);
-            if (e == null || e.isBlocked()) {
+            if (e == null) {
                 misses++;
                 elements[x] = null;
             } else {
@@ -176,12 +192,12 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
         getHits.addAndGet(hits);
 
         return elements;
-
     }
 
     /**
      * @inheritDoc
      */
+    @Override
     public boolean flush_all() {
         return flush_all(0);
     }
@@ -189,6 +205,7 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
     /**
      * @inheritDoc
      */
+    @Override
     public boolean flush_all(int expire) {
         storage.clear();
         return true;
@@ -197,6 +214,7 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
     /**
      * @inheritDoc
      */
+    @Override
     public void close() throws IOException {
         storage.close();
     }
