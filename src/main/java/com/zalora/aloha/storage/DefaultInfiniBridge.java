@@ -4,7 +4,7 @@ import com.zalora.aloha.compressor.Compressor;
 import com.zalora.aloha.memcached.MemcachedItem;
 import com.zalora.jmemcached.LocalCacheElement;
 import lombok.extern.slf4j.Slf4j;
-import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.*;
 import org.jboss.netty.buffer.ChannelBuffers;
 import java.util.Collection;
 import java.util.Set;
@@ -31,7 +31,7 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
 
     @Override
     public LocalCacheElement get(Object key) {
-        MemcachedItem item = ispanCache.get((String) key);
+        MemcachedItem item = ispanCache.get(key);
         if (item == null) {
             return null;
         }
