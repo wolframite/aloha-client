@@ -35,12 +35,8 @@ public class ClientConfig {
     private int maxEntries;
 
     @Getter
-    @Value("${infinispan.remote.primaryCacheName}")
-    private String primaryCacheName;
-
-    @Getter
-    @Value("${infinispan.remote.secondaryCacheName}")
-    private String secondaryCacheName;
+    @Value("${infinispan.remote.cacheName}")
+    private String cacheName;
 
     @Bean
     public Configuration hotrodConfig() {

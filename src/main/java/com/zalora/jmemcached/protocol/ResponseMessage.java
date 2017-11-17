@@ -7,8 +7,10 @@ import java.util.*;
 /**
  * Represents the response to a command.
  */
+
 public final class ResponseMessage<CACHE_ELEMENT extends CacheElement> implements Serializable {
 
+    @SuppressWarnings("unchecked")
     public ResponseMessage(CommandMessage cmd) {
         this.cmd = cmd;
     }

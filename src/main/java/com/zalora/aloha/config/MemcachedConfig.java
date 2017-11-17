@@ -17,11 +17,8 @@ public class MemcachedConfig {
     @Value("${memcached.host}")
     private String host;
 
-    @Value("${memcached.port.primary}")
+    @Value("${memcached.port}")
     private int primaryPort;
-
-    @Value("${memcached.port.secondary}")
-    private int secondaryPort;
 
     @Getter
     @Value("${memcached.idleTime}")
@@ -32,13 +29,8 @@ public class MemcachedConfig {
     private boolean verbose;
 
     @Bean
-    public InetSocketAddress mainSocketAddress() {
+    public InetSocketAddress socketAddress() {
         return new InetSocketAddress(host, primaryPort);
-    }
-
-    @Bean
-    public InetSocketAddress sessionSocketAddress() {
-        return new InetSocketAddress(host, secondaryPort);
     }
 
 }

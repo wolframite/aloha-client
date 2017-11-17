@@ -31,12 +31,7 @@ public class ClientManager {
 
     @Bean
     public RemoteCache<String, MemcachedItem> mainCache(RemoteCacheManager remoteCacheManager) {
-        return remoteCacheManager.getCache(clientConfig.getPrimaryCacheName());
-    }
-
-    @Bean
-    public RemoteCache<String, MemcachedItem> sessionCache(RemoteCacheManager remoteCacheManager) {
-        return remoteCacheManager.getCache(clientConfig.getSecondaryCacheName());
+        return remoteCacheManager.getCache(clientConfig.getCacheName());
     }
 
 }

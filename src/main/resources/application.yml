@@ -10,21 +10,13 @@ infinispan:
     maxEntries: 50000
 
   remote:
-    primaryCacheName: main
-    primaryCompression: com.zalora.aloha.compressor.Lz4
-
-    secondaryCacheName: session
-    secondaryCompression:
+    cacheName: memcachedCache
+    compression: #com.zalora.aloha.compressor.Lz4
 
 memcached:
   host: 0.0.0.0
   idleTime: 2000
   verbose: false
-  port:
-    primary : 11211
-    secondary: 11212
+  port: 11211
 
-server.port: 8080
 logging.level.root: INFO
-management.security.enabled: false
-endpoints.shutdown.enabled: true

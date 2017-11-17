@@ -11,10 +11,12 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 /**
- * The MemcachedCommandDecoder is responsible for taking lines from the MemcachedFrameDecoder and parsing them
- * into CommandMessage instances for handling by the MemcachedCommandHandler
+ * The MemcachedCommandDecoder is responsible for taking lines from the MemcachedFrameDecoder and
+ * parsing them into CommandMessage instances for handling by the MemcachedCommandHandler
  *
- * Protocol status is held in the SessionStatus instance which is shared between each of the decoders in the pipeline.
+ * Protocol status is held in the SessionStatus instance which is shared between each of the
+ * decoders in the pipeline.
+ *
  * @author Ryan Daum
  */
 public final class MemcachedCommandDecoder extends FrameDecoder {
@@ -29,28 +31,31 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
     }
 
     /**
-     * Index finder which locates a byte which is neither a {@code CR ('\r')}
-     * nor a {@code LF ('\n')}.
+     * Index finder which locates a byte which is neither a {@code CR ('\r')} nor a {@code LF
+     * ('\n')}.
      */
-    static ChannelBufferIndexFinder CRLF_OR_WS = new ChannelBufferIndexFinder() {
-        public final boolean find(ChannelBuffer buffer, int guessedIndex) {
-            byte b = buffer.getByte(guessedIndex);
-            return b == ' ' || b == '\r' || b == '\n';
-        }
+    static ChannelBufferIndexFinder CRLF_OR_WS = (buffer, guessedIndex) -> {
+        byte b = buffer.getByte(guessedIndex);
+        return b == ' ' || b == '\r' || b == '\n';
     };
 
     static boolean eol(int pos, ChannelBuffer buffer) {
-        return buffer.readableBytes() >= MIN_BYTES_LINE && buffer.getByte(buffer.readerIndex() + pos) == '\r' && buffer.getByte(buffer.readerIndex() + pos+1) == '\n';
+        return buffer.readableBytes() >= MIN_BYTES_LINE
+            && buffer.getByte(buffer.readerIndex() + pos) == '\r'
+            && buffer.getByte(buffer.readerIndex() + pos + 1) == '\n';
     }
 
     @Override
-    protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
+    protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer)
+        throws Exception {
         if (status.state == SessionStatus.State.READY) {
             ChannelBuffer in = buffer.slice();
 
             // split into pieces
             List<ChannelBuffer> pieces = new ArrayList<ChannelBuffer>(6);
-            if (in.readableBytes() < MIN_BYTES_LINE) return null;
+            if (in.readableBytes() < MIN_BYTES_LINE) {
+                return null;
+            }
             int pos = in.bytesBefore(CRLF_OR_WS);
             boolean eol = false;
             do {
@@ -61,7 +66,9 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
                     slice.readerIndex(0);
                     pieces.add(slice);
                     in.skipBytes(skip);
-                    if (eol) break;
+                    if (eol) {
+                        break;
+                    }
                 }
             } while ((pos = in.bytesBefore(CRLF_OR_WS)) != -1);
             if (eol) {
@@ -69,19 +76,24 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
 
                 return processLine(pieces, channel, ctx);
             }
-            if (status.state != SessionStatus.State.WAITING_FOR_DATA) status.ready();
+            if (status.state != SessionStatus.State.WAITING_FOR_DATA) {
+                status.ready();
+            }
         } else if (status.state == SessionStatus.State.WAITING_FOR_DATA) {
-            if (buffer.readableBytes() >= status.bytesNeeded + MemcachedResponseEncoder.CRLF.capacity()) {
+            if (buffer.readableBytes() >= status.bytesNeeded + MemcachedResponseEncoder.CRLF
+                .capacity()) {
 
                 // verify delimiter matches at the right location
-                ChannelBuffer dest = buffer.slice(buffer.readerIndex() + status.bytesNeeded, MIN_BYTES_LINE);
+                ChannelBuffer dest = buffer
+                    .slice(buffer.readerIndex() + status.bytesNeeded, MIN_BYTES_LINE);
 
                 if (!dest.equals(MemcachedResponseEncoder.CRLF)) {
                     // before we throw error... we're ready for the next command
                     status.ready();
 
                     // error, no delimiter at end of payload
-                    throw new IncorrectlyTerminatedPayloadException("payload not terminated correctly");
+                    throw new IncorrectlyTerminatedPayloadException(
+                        "payload not terminated correctly");
                 } else {
                     status.processingMultiline();
 
@@ -92,7 +104,9 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
 
                     CommandMessage commandMessage = continueSet(channel, status, result, ctx);
 
-                    if (status.state != SessionStatus.State.WAITING_FOR_DATA) status.ready();
+                    if (status.state != SessionStatus.State.WAITING_FOR_DATA) {
+                        status.ready();
+                    }
 
                     return commandMessage;
                 }
@@ -104,25 +118,27 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
     }
 
     /**
-     * Process an individual complete protocol line and either passes the command for processing by the
-     * session handler, or (in the case of SET-type commands) partially parses the command and sets the session into
-     * a state to wait for additional data.
+     * Process an individual complete protocol line and either passes the command for processing by
+     * the session handler, or (in the case of SET-type commands) partially parses the command and
+     * sets the session into a state to wait for additional data.
      *
-     * @param parts                 the (originally space separated) parts of the command
-     * @param channel               the netty channel to operate on
+     * @param parts the (originally space separated) parts of the command
+     * @param channel the netty channel to operate on
      * @param channelHandlerContext the netty channel handler context
-     * @throws MalformedCommandException
-     * @throws UnknownCommandException
      */
-    private Object processLine(List<ChannelBuffer> parts, Channel channel, ChannelHandlerContext channelHandlerContext) throws UnknownCommandException, MalformedCommandException {
+    @SuppressWarnings("unchecked")
+    private Object processLine(List<ChannelBuffer> parts, Channel channel,
+        ChannelHandlerContext channelHandlerContext)
+        throws UnknownCommandException, MalformedCommandException {
         final int numParts = parts.size();
 
         // Turn the command into an enum for matching on
         Op op;
         try {
             op = Op.FindOp(parts.get(0));
-            if (op == null)
+            if (op == null) {
                 throw new IllegalArgumentException("unknown operation: " + parts.get(0).toString());
+            }
         } catch (IllegalArgumentException e) {
             throw new UnknownCommandException("unknown operation: " + parts.get(0).toString());
         }
@@ -137,18 +153,21 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
                 if (numParts >= MIN_BYTES_LINE) {
                     if (parts.get(numParts - 1).equals(NOREPLY)) {
                         cmd.noreply = true;
-                        if (numParts == 4)
+                        if (numParts == 4) {
                             cmd.time = BufferUtils.atoi(parts.get(MIN_BYTES_LINE));
-                    } else if (numParts == 3)
+                        }
+                    } else if (numParts == 3) {
                         cmd.time = BufferUtils.atoi(parts.get(MIN_BYTES_LINE));
+                    }
                 }
 
                 return cmd;
             case DECR:
             case INCR:
                 // Malformed
-                if (numParts < MIN_BYTES_LINE || numParts > 3)
+                if (numParts < MIN_BYTES_LINE || numParts > 3) {
                     throw new MalformedCommandException("invalid increment command");
+                }
 
                 cmd.setKey(parts.get(1));
                 cmd.incrAmount = BufferUtils.atoi(parts.get(MIN_BYTES_LINE));
@@ -162,21 +181,25 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
                 if (numParts >= 1) {
                     if (parts.get(numParts - 1).equals(NOREPLY)) {
                         cmd.noreply = true;
-                        if (numParts == 3)
+                        if (numParts == 3) {
                             cmd.time = BufferUtils.atoi((parts.get(1)));
-                    } else if (numParts == MIN_BYTES_LINE)
+                        }
+                    } else if (numParts == MIN_BYTES_LINE) {
                         cmd.time = BufferUtils.atoi((parts.get(1)));
+                    }
                 }
                 return cmd;
             case VERBOSITY: // verbosity <time> [noreply]\r\n
                 // Malformed
-                if (numParts < MIN_BYTES_LINE || numParts > 3)
+                if (numParts < MIN_BYTES_LINE || numParts > 3) {
                     throw new MalformedCommandException("invalid verbosity command");
+                }
 
                 cmd.time = BufferUtils.atoi((parts.get(1))); // verbose level
 
-                if (numParts > 1 && parts.get(MIN_BYTES_LINE).equals(NOREPLY))
+                if (numParts > 1 && parts.get(MIN_BYTES_LINE).equals(NOREPLY)) {
                     cmd.noreply = true;
+                }
 
                 return cmd;
             case TOUCH:
@@ -217,8 +240,9 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
                         cmd.cas_key = BufferUtils.atol(parts.get(5));
                     }
 
-                    if (numParts == noreply + 1 && parts.get(noreply).equals(NOREPLY))
+                    if (numParts == noreply + 1 && parts.get(noreply).equals(NOREPLY)) {
                         cmd.noreply = true;
+                    }
                 }
 
                 // Now indicate that we need more for this command by changing the session status's state.
@@ -247,12 +271,13 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
     /**
      * Handles the continuation of a SET/ADD/REPLACE command with the data it was waiting for.
      *
-     * @param channel               netty channel
-     * @param state                 the current session status (unused)
-     * @param remainder             the bytes picked up
+     * @param channel netty channel
+     * @param state the current session status (unused)
+     * @param remainder the bytes picked up
      * @param channelHandlerContext netty channel handler context
      */
-    private CommandMessage continueSet(Channel channel, SessionStatus state, ChannelBuffer remainder, ChannelHandlerContext channelHandlerContext) {
+    private CommandMessage continueSet(Channel channel, SessionStatus state,
+        ChannelBuffer remainder, ChannelHandlerContext channelHandlerContext) {
         state.cmd.element.setData(remainder);
         return state.cmd;
     }

@@ -56,7 +56,9 @@ public final class MemcachedResponseEncoder<CACHE_ELEMENT extends CacheElement> 
 
     @Override
     public void messageReceived(ChannelHandlerContext channelHandlerContext, MessageEvent messageEvent) throws Exception {
-        ResponseMessage<CACHE_ELEMENT> command = (ResponseMessage<CACHE_ELEMENT>) messageEvent.getMessage();
+        @SuppressWarnings("unchecked") ResponseMessage<CACHE_ELEMENT> command =
+            (ResponseMessage<CACHE_ELEMENT>) messageEvent.getMessage();
+
         Op cmd = command.cmd.op;
         Channel channel = messageEvent.getChannel();
 
