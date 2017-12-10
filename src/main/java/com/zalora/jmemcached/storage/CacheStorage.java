@@ -1,51 +1,54 @@
 package com.zalora.jmemcached.storage;
 
-import java.io.IOException;
+import com.zalora.jmemcached.LocalCacheElement;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 
 /**
- * The interface for cache storage. Essentially a concurrent map but with methods for investigating the heap
- * state of the storage unit and with additional support for explicit resource-cleanup (close()).
+ * Removed the extension of the Map interface, because the methods don't fit ignite's cache
+ * Added the useful map methods to the interface
  *
  * @author Ryan Daum
  * @author Wolfram Huesken <wolfram.huesken@zalora.com>
  */
-public interface CacheStorage<K, V extends SizedItem> extends ConcurrentMap<K, V> {
-
-    /**
-     * @return the capacity (in bytes) of the storage
-     */
-    long getMemoryCapacity();
-
-    /**
-     * @return the current usage (in bytes) of the storage
-     */
-    long getMemoryUsed();
+public interface CacheStorage<K, V> {
 
     /**
      * @return the capacity (in # of items) of the storage
      */
-    int capacity();
+    int size();
 
     /**
-     *
-     * @param key
-     * @param expire
-     * @return
+     * Remove all items from the cache synchronously
      */
-    boolean touch(String key, long expire);
+    void clear();
 
-    /**
-     * Close the storage unit, deallocating any resources it might be currently holding.
-     *
-     * @throws IOException thrown if IO faults occur anywhere during close.
-     */
-    void close() throws IOException;
+    boolean containsKey(K key);
+
+    boolean remove(K key);
+
+    V get(K key);
+
+    void put(K key, V value);
+
+    boolean replace(K key, V value);
+
+    boolean replace(K key, V localCacheElement, V localCacheElement2);
+
+    boolean putIfAbsent(K key, V value);
 
     /**
      * Try to improve performance with a multi-get
      */
     Collection<V> getMulti(Set<K> keys);
+
+    /**
+     * Reset expiration
+     */
+    boolean touch(K key);
+
+    /**
+     * Close the local cache, the cluster data will remain
+     */
+    void close();
 
 }

@@ -41,7 +41,7 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
      */
     @Override
     public TouchResponse touch(String key, long expire) {
-        if (storage.touch(key, expire)) {
+        if (storage.touch(key)) {
             return TouchResponse.TOUCHED;
         }
 
@@ -55,7 +55,7 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
     public StoreResponse add(LocalCacheElement e) {
         final long origCasUnique = e.getCasUnique();
         e.setCasUnique(casCounter.getAndIncrement());
-        final boolean stored = storage.putIfAbsent(e.getKey(), e) == null;
+        final boolean stored = storage.putIfAbsent(e.getKey(), e);
         // we should restore the former cas so that the object isn't left dirty
         if (!stored) {
             e.setCasUnique(origCasUnique);
@@ -68,7 +68,7 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
      */
     @Override
     public StoreResponse replace(LocalCacheElement e) {
-        return storage.replace(e.getKey(), e) != null ? StoreResponse.STORED : StoreResponse.NOT_STORED;
+        return storage.replace(e.getKey(), e) ? StoreResponse.STORED : StoreResponse.NOT_STORED;
     }
 
     /**
@@ -215,16 +215,8 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
      * @inheritDoc
      */
     @Override
-    public void close() throws IOException {
+    public void close() {
         storage.close();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
-    protected Set<String> keys() {
-        return storage.keySet();
     }
 
     /**
@@ -233,22 +225,6 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
     @Override
     public long getCurrentItems() {
         return storage.size();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
-    public long getLimitMaxBytes() {
-        return storage.getMemoryCapacity();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
-    public long getCurrentBytes() {
-        return storage.getMemoryUsed();
     }
 
 }

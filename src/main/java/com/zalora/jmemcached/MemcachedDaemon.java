@@ -7,7 +7,6 @@ import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.*;
 import org.jboss.netty.channel.socket.ServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
@@ -17,7 +16,7 @@ import java.util.concurrent.Executors;
  * @author Ryan Daum
  */
 @Slf4j
-public class MemCacheDaemon<CACHE_ELEMENT extends CacheElement> {
+public class MemcachedDaemon<E extends CacheElement> {
 
     public static String memcachedVersion = "1.0.3";
 
@@ -27,16 +26,16 @@ public class MemCacheDaemon<CACHE_ELEMENT extends CacheElement> {
     private boolean verbose;
     private int idleTime;
     private InetSocketAddress addr;
-    private Cache<CACHE_ELEMENT> cache;
+    private Cache<E> cache;
 
     private boolean running = false;
     private ServerSocketChannelFactory channelFactory;
     private DefaultChannelGroup allChannels;
 
-    public MemCacheDaemon() {
+    public MemcachedDaemon() {
     }
 
-    public MemCacheDaemon(Cache<CACHE_ELEMENT> cache) {
+    public MemcachedDaemon(Cache<E> cache) {
         this.cache = cache;
     }
 
@@ -80,11 +79,7 @@ public class MemCacheDaemon<CACHE_ELEMENT extends CacheElement> {
             throw new RuntimeException("failure to complete closing all network channels");
         }
         log.info("channels closed, freeing cache storage");
-        try {
-            cache.close();
-        } catch (IOException e) {
-            throw new RuntimeException("exception while closing storage", e);
-        }
+        cache.close();
         channelFactory.releaseExternalResources();
 
         running = false;
@@ -103,11 +98,11 @@ public class MemCacheDaemon<CACHE_ELEMENT extends CacheElement> {
         this.addr = addr;
     }
 
-    public Cache<CACHE_ELEMENT> getCache() {
+    public Cache<E> getCache() {
         return cache;
     }
 
-    public void setCache(Cache<CACHE_ELEMENT> cache) {
+    public void setCache(Cache<E> cache) {
         this.cache = cache;
     }
 

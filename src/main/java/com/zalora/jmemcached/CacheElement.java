@@ -1,13 +1,12 @@
 package com.zalora.jmemcached;
 
-import com.zalora.jmemcached.storage.SizedItem;
 import org.jboss.netty.buffer.ChannelBuffer;
 import java.io.Serializable;
 
 /**
  * @author Ryan Daum
  */
-public interface CacheElement extends Serializable, SizedItem {
+public interface CacheElement extends Serializable {
 
     int size();
 

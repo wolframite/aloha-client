@@ -1,7 +1,6 @@
 package com.zalora.aloha.memcached;
 
 import lombok.*;
-
 import java.io.Serializable;
 
 /**

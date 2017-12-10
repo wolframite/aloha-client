@@ -108,10 +108,8 @@ public interface Cache<CACHE_ELEMENT extends CacheElement> {
 
     /**
      * Close the cache, freeing all resources on which it depends.
-     *
-     * @throws IOException
      */
-    void close() throws IOException;
+    void close();
 
     /**
      * @return the # of items in the cache

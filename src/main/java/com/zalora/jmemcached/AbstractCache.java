@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.*;
 import static java.lang.String.valueOf;
 
 /**
- * Abstract implementation of a cache handler for the memcache daemon; provides some convenience methods and
+ * Abstract implementation of a cache handler for the memcached daemon; provides some convenience methods and
  * a general framework for implementation
  * @author Ryan Daum
  */
@@ -31,13 +31,7 @@ public abstract class AbstractCache<CACHE_ELEMENT extends CacheElement> implemen
         return (int) (System.currentTimeMillis());
     }
 
-    protected abstract Set<String> keys();
-
     public abstract long getCurrentItems();
-
-    public abstract long getLimitMaxBytes();
-
-    public abstract long getCurrentBytes();
 
     public final int getGetCmds() {
         return getCmds.get();
@@ -55,6 +49,16 @@ public abstract class AbstractCache<CACHE_ELEMENT extends CacheElement> implemen
         return getMisses.get();
     }
 
+    @Override
+    public long getCurrentBytes() {
+        return 0;
+    }
+
+    @Override
+    public long getLimitMaxBytes() {
+        return 0;
+    }
+
     /**
      * Return runtime statistics
      *
@@ -65,7 +69,7 @@ public abstract class AbstractCache<CACHE_ELEMENT extends CacheElement> implemen
         Map<String, Set<String>> result = new HashMap<String, Set<String>>();
 
         // Stats we know
-        multiSet(result, "version", MemCacheDaemon.memcachedVersion);
+        multiSet(result, "version", MemcachedDaemon.memcachedVersion);
         multiSet(result, "cmd_get", valueOf(getGetCmds()));
         multiSet(result, "cmd_set", valueOf(getSetCmds()));
         multiSet(result, "get_hits", valueOf(getGetHits()));

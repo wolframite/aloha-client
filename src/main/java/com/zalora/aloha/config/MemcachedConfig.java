@@ -6,8 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import java.net.InetSocketAddress;
 
-import javax.annotation.PostConstruct;
-
 /**
  * @author Wolfram Huesken <wolfram.huesken@zalora.com>
  */
@@ -17,11 +15,8 @@ public class MemcachedConfig {
     @Value("${memcached.host}")
     private String host;
 
-    @Value("${memcached.port.primary}")
-    private int primaryPort;
-
-    @Value("${memcached.port.secondary}")
-    private int secondaryPort;
+    @Value("${memcached.port}")
+    private int port;
 
     @Getter
     @Value("${memcached.idleTime}")
@@ -32,13 +27,8 @@ public class MemcachedConfig {
     private boolean verbose;
 
     @Bean
-    public InetSocketAddress mainSocketAddress() {
-        return new InetSocketAddress(host, primaryPort);
-    }
-
-    @Bean
-    public InetSocketAddress sessionSocketAddress() {
-        return new InetSocketAddress(host, secondaryPort);
+    public InetSocketAddress inetSocketAddress() {
+        return new InetSocketAddress(host, port);
     }
 
 }

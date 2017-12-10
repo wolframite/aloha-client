@@ -1,14 +1,12 @@
 package com.zalora.aloha.storage;
 
-import com.zalora.aloha.compressor.Compressor;
 import com.zalora.aloha.memcached.MemcachedItem;
 import com.zalora.jmemcached.LocalCacheElement;
 import lombok.extern.slf4j.Slf4j;
-import org.infinispan.client.hotrod.*;
+import org.apache.ignite.IgniteCache;
 import org.jboss.netty.buffer.ChannelBuffers;
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -19,104 +17,74 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultInfiniBridge extends AbstractInfiniBridge {
 
-    private RemoteCache<String, MemcachedItem> ispanCache;
-    private Compressor compressor;
+    private IgniteCache<String, MemcachedItem> igniteCache;
 
-    public DefaultInfiniBridge(RemoteCache<String, MemcachedItem> ispanCache, Compressor compressor) {
-        super(ispanCache);
-
-        this.ispanCache = ispanCache;
-        this.compressor = compressor;
+    public DefaultInfiniBridge(IgniteCache<String, MemcachedItem> igniteCache) {
+        super(igniteCache);
+        this.igniteCache = igniteCache;
     }
 
     @Override
-    public LocalCacheElement get(Object key) {
-        MemcachedItem item = ispanCache.get(key);
+    public LocalCacheElement get(String key) {
+        MemcachedItem item = igniteCache.get(key);
         if (item == null) {
             return null;
         }
 
-        compressor.afterGet(item);
         return createLocalCacheElement(item);
     }
 
     @Override
     public Collection<LocalCacheElement> getMulti(Set<String> keys) {
-        return ispanCache.getAll(keys).entrySet().stream()
+        return igniteCache.getAll(keys).entrySet().stream()
             .map(entry -> {
-                compressor.afterGet(entry.getValue());
                 return createLocalCacheElement(entry.getValue());
             }).collect(Collectors.toList());
     }
 
     @Override
-    public LocalCacheElement put(String key, LocalCacheElement localCacheElement) {
+    public void put(String key, LocalCacheElement localCacheElement) {
         MemcachedItem memcachedItem = createMemcachedItem(localCacheElement);
-        compressor.beforePut(memcachedItem);
-
-        if (localCacheElement.getExpire() > 0) {
-            ispanCache.put(key, memcachedItem, localCacheElement.getExpire(), TimeUnit.MILLISECONDS);
-            return null;
-        }
-
-        ispanCache.put(key, memcachedItem);
-        return null;
+        igniteCache.put(key, memcachedItem);
     }
 
     @Override
-    public boolean remove(Object key, Object localCacheElement) {
-        ispanCache.removeAsync(key, createMemcachedItem((LocalCacheElement) localCacheElement));
-        return true;
-    }
-
-    @Override
-    public LocalCacheElement replace(String key, LocalCacheElement localCacheElement) {
+    public boolean replace(String key, LocalCacheElement localCacheElement) {
         MemcachedItem memcachedItem = createMemcachedItem(localCacheElement);
-        compressor.beforePut(memcachedItem);
-
-        ispanCache.replace(key, memcachedItem, localCacheElement.getExpire(), TimeUnit.MILLISECONDS);
-        return null;
+        return igniteCache.replace(key, memcachedItem);
     }
 
     @Override
-    public boolean touch(String key, long expire) {
-        MemcachedItem item = ispanCache.get(key);
-        if (item == null) {
-            return false;
-        }
-
-        item.setExpire(expire);
-        ispanCache.replace(key, item, expire, TimeUnit.MILLISECONDS);
-        return true;
-    }
-
-    @Override
-    public LocalCacheElement putIfAbsent(String key, LocalCacheElement localCacheElement) {
+    public boolean replace(String key, LocalCacheElement localCacheElement, LocalCacheElement localCacheElement2) {
         MemcachedItem memcachedItem = createMemcachedItem(localCacheElement);
-        compressor.beforePut(memcachedItem);
+        MemcachedItem memcachedItem2 = createMemcachedItem(localCacheElement2);
+        return igniteCache.replace(key, memcachedItem, memcachedItem2);
+    }
 
-        if (localCacheElement.getExpire() > 0) {
-            ispanCache.putIfAbsent(key, memcachedItem, localCacheElement.getExpire(), TimeUnit.MILLISECONDS);
-            return null;
-        }
+    @Override
+    public boolean touch(String key) {
+        MemcachedItem item = igniteCache.get(key);
+        return item != null && igniteCache.replace(key, item);
+    }
 
-        ispanCache.putIfAbsent(key, memcachedItem);
-        return null;
+    @Override
+    public boolean putIfAbsent(String key, LocalCacheElement localCacheElement) {
+        MemcachedItem memcachedItem = createMemcachedItem(localCacheElement);
+        return igniteCache.putIfAbsent(key, memcachedItem);
     }
 
     private LocalCacheElement createLocalCacheElement(MemcachedItem memcachedItem) {
         LocalCacheElement localCacheElement = new LocalCacheElement(
             memcachedItem.getKey(), memcachedItem.getFlags(), memcachedItem.getExpire(), 0
         );
-        localCacheElement.setData(ChannelBuffers.copiedBuffer(memcachedItem.getData()));
 
+        localCacheElement.setData(ChannelBuffers.copiedBuffer(memcachedItem.getData()));
         return localCacheElement;
     }
 
     private MemcachedItem createMemcachedItem(LocalCacheElement lce) {
         byte[] data = new byte[lce.getData().capacity()];
         lce.getData().getBytes(0, data);
-
         return new MemcachedItem(lce.getKey(), data, lce.getFlags(), lce.getExpire());
     }
 

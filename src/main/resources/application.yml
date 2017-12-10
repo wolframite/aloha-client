@@ -1,0 +1,35 @@
+---
+spring:
+  application:
+    name: aloha-client
+
+aloha:
+  internal:
+    igniteHome: ${user.dir}
+    near-cache:
+      enabled: false
+
+  remote:
+    cacheName: default
+
+memcached:
+  host: 0.0.0.0
+  idleTime: 3000
+  verbose: false
+  port: 11211
+
+logging.level:
+  root: INFO
+  org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: WARN
+  org.springframework.boot.actuate.endpoint.mvc.EndpointHandlerMapping: WARN
+
+server.port: 8080
+endpoints.shutdown.enabled: true
+management.security.enabled: false
+
+---
+spring:
+  profiles: dev
+
+server.port: 8090
+logging.level.root: INFO
