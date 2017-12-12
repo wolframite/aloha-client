@@ -1,4 +1,4 @@
 #!/bin/bash
 mvn clean package
 JAR_FILE=`ls target/aloha-*.jar`
-java -server -DIGNITE_QUIET=false -Xms512m -Xmx1536m -XX:+UseG1GC -Djava.net.preferIPv4=true -jar $JAR_FILE $1
+java -server -DIGNITE_QUIET=false -Xms512m -Xmx1g -XX:+UseG1GC -Djava.net.preferIPv4=true -jar $JAR_FILE $1

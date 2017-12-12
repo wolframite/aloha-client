@@ -1,7 +1,6 @@
 package com.zalora.jmemcached;
 
 import com.zalora.jmemcached.storage.CacheStorage;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -142,14 +141,7 @@ public final class CacheImpl extends AbstractCache<LocalCacheElement> implements
      */
     @Override
     public Integer get_add(String key, int mod) {
-        LocalCacheElement old = storage.get(key);
-        if (old == null) {
-            getMisses.incrementAndGet();
-            return null;
-        } else {
-            LocalCacheElement.IncrDecrResult result = old.add(mod);
-            return storage.replace(old.getKey(), old, result.replace) ? result.oldValue : null;
-        }
+        return storage.crement(key, mod);
     }
 
     /**

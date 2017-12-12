@@ -1,6 +1,5 @@
 package com.zalora.jmemcached.storage;
 
-import com.zalora.jmemcached.LocalCacheElement;
 import java.util.*;
 
 /**
@@ -35,6 +34,14 @@ public interface CacheStorage<K, V> {
     boolean replace(K key, V localCacheElement, V localCacheElement2);
 
     boolean putIfAbsent(K key, V value);
+
+    /**
+     * increment/decrement key
+     * @param key
+     * @param modifier
+     * @return
+     */
+    Integer crement(K key, int modifier);
 
     /**
      * Try to improve performance with a multi-get

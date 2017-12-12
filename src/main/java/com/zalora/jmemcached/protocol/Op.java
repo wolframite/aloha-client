@@ -12,7 +12,7 @@ public enum Op {
     INCR, REPLACE, ADD, SET, CAS, STATS, VERSION,
     QUIT, FLUSH_ALL, VERBOSITY, TOUCH;
 
-    private static Map<ChannelBuffer, Op> opsbf = new HashMap<ChannelBuffer, Op>();
+    private static Map<ChannelBuffer, Op> opsbf = new HashMap<>();
 
     static {
         for (int x = 0; x < Op.values().length; x++) {

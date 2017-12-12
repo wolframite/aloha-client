@@ -1,4 +1,4 @@
-package com.zalora.aloha.memcached;
+package com.zalora.aloha.beans;
 
 import lombok.*;
 import java.io.Serializable;
@@ -20,6 +20,14 @@ public class MemcachedItem implements Serializable {
 
     public MemcachedItem(String key) {
         this.key = key;
+    }
+
+    // Dolly constructor
+    public MemcachedItem(MemcachedItem item) {
+        this.key = item.getKey();
+        this.data = item.getData();
+        this.flags = item.getFlags();
+        this.expire = item.getExpire();
     }
 
 }

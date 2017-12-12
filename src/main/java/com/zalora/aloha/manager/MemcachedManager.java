@@ -1,18 +1,18 @@
 package com.zalora.aloha.manager;
 
 import com.zalora.aloha.config.MemcachedConfig;
-import com.zalora.aloha.memcached.MemcachedItem;
+import com.zalora.aloha.beans.MemcachedItem;
 import com.zalora.aloha.storage.DefaultInfiniBridge;
 import com.zalora.jmemcached.*;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.net.InetSocketAddress;
-import javax.annotation.PostConstruct;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Wolfram Huesken <wolfram.huesken@zalora.com>

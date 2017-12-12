@@ -1,6 +1,6 @@
 package com.zalora.aloha.storage;
 
-import com.zalora.aloha.memcached.MemcachedItem;
+import com.zalora.aloha.beans.MemcachedItem;
 import com.zalora.jmemcached.LocalCacheElement;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ignite.IgniteCache;
@@ -37,9 +37,7 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
     @Override
     public Collection<LocalCacheElement> getMulti(Set<String> keys) {
         return igniteCache.getAll(keys).entrySet().stream()
-            .map(entry -> {
-                return createLocalCacheElement(entry.getValue());
-            }).collect(Collectors.toList());
+            .map(entry -> createLocalCacheElement(entry.getValue())).collect(Collectors.toList());
     }
 
     @Override
@@ -55,10 +53,11 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
     }
 
     @Override
-    public boolean replace(String key, LocalCacheElement localCacheElement, LocalCacheElement localCacheElement2) {
-        MemcachedItem memcachedItem = createMemcachedItem(localCacheElement);
-        MemcachedItem memcachedItem2 = createMemcachedItem(localCacheElement2);
-        return igniteCache.replace(key, memcachedItem, memcachedItem2);
+    public boolean replace(String key, LocalCacheElement oldItem, LocalCacheElement newItem) {
+        MemcachedItem oldMemcachedItem = createMemcachedItem(oldItem);
+        MemcachedItem newMemcachedItem = createMemcachedItem(newItem);
+
+        return igniteCache.replace(key, oldMemcachedItem, newMemcachedItem);
     }
 
     @Override
@@ -71,6 +70,21 @@ public class DefaultInfiniBridge extends AbstractInfiniBridge {
     public boolean putIfAbsent(String key, LocalCacheElement localCacheElement) {
         MemcachedItem memcachedItem = createMemcachedItem(localCacheElement);
         return igniteCache.putIfAbsent(key, memcachedItem);
+    }
+
+    @Override
+    public Integer crement(String key, int modifier) {
+        MemcachedItem item = igniteCache.get(key);
+        if (item.getFlags() != 1) {
+            return null;
+        }
+
+        int old = Integer.parseInt(new String(item.getData()));
+
+        MemcachedItem oldItem = new MemcachedItem(item);
+        item.setData(String.format("%d", old + modifier).getBytes());
+
+        return igniteCache.replace(key, oldItem, item) ? old + modifier : null;
     }
 
     private LocalCacheElement createLocalCacheElement(MemcachedItem memcachedItem) {

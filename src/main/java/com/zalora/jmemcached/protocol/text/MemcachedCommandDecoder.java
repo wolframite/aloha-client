@@ -49,7 +49,7 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
             ChannelBuffer in = buffer.slice();
 
             // split into pieces
-            List<ChannelBuffer> pieces = new ArrayList<ChannelBuffer>(6);
+            List<ChannelBuffer> pieces = new ArrayList<>(6);
             if (in.readableBytes() < MIN_BYTES_LINE) return null;
             int pos = in.bytesBefore(CRLF_OR_WS);
             boolean eol = false;
@@ -111,8 +111,6 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
      * @param parts                 the (originally space separated) parts of the command
      * @param channel               the netty channel to operate on
      * @param channelHandlerContext the netty channel handler context
-     * @throws MalformedCommandException
-     * @throws UnknownCommandException
      */
     private Object processLine(List<ChannelBuffer> parts, Channel channel, ChannelHandlerContext channelHandlerContext) throws UnknownCommandException, MalformedCommandException {
         final int numParts = parts.size();

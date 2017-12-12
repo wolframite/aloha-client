@@ -1,12 +1,11 @@
 package com.zalora.jmemcached;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
  * @author Ryan Daum
  */
-public interface Cache<CACHE_ELEMENT extends CacheElement> {
+public interface Cache<E extends CacheElement> {
 
     /**
      * Handle the deletion of an item from the cache.
@@ -22,7 +21,7 @@ public interface Cache<CACHE_ELEMENT extends CacheElement> {
      * @param e the element to add
      * @return the store response code
      */
-    StoreResponse add(CACHE_ELEMENT e);
+    StoreResponse add(E e);
 
     /**
      * Replace an element in the cache
@@ -30,7 +29,7 @@ public interface Cache<CACHE_ELEMENT extends CacheElement> {
      * @param e the element to replace
      * @return the store response code
      */
-    StoreResponse replace(CACHE_ELEMENT e);
+    StoreResponse replace(E e);
 
     /**
      * Append bytes to the end of an element in the cache
@@ -38,7 +37,7 @@ public interface Cache<CACHE_ELEMENT extends CacheElement> {
      * @param element the element to append
      * @return the store response code
      */
-    StoreResponse append(CACHE_ELEMENT element);
+    StoreResponse append(E element);
 
     /**
      * Prepend bytes to the end of an element in the cache
@@ -46,7 +45,7 @@ public interface Cache<CACHE_ELEMENT extends CacheElement> {
      * @param element the element to append
      * @return the store response code
      */
-    StoreResponse prepend(CACHE_ELEMENT element);
+    StoreResponse prepend(E element);
 
     /**
      * Set an element in the cache
@@ -54,7 +53,7 @@ public interface Cache<CACHE_ELEMENT extends CacheElement> {
      * @param e the element to set
      * @return the store response code
      */
-    StoreResponse set(CACHE_ELEMENT e);
+    StoreResponse set(E e);
 
     /**
      * Set an element in the cache but only if the element has not been touched
@@ -64,10 +63,10 @@ public interface Cache<CACHE_ELEMENT extends CacheElement> {
      * @param e       the element to set
      * @return the store response code
      */
-    StoreResponse cas(Long cas_key, CACHE_ELEMENT e);
+    StoreResponse cas(Long cas_key, E e);
 
     /**
-     * Increment/decremen t an (integer) element in the cache
+     * Increment/decrement an (integer) element in the cache
      *
      * @param key the key to increment
      * @param mod the amount to add to the value
@@ -89,7 +88,7 @@ public interface Cache<CACHE_ELEMENT extends CacheElement> {
      * @param keys the key for the element to lookup
      * @return the element, or 'null' in case of cache miss.
      */
-    CACHE_ELEMENT[] get(String... keys);
+    E[] get(String... keys);
 
     /**
      * Flush all cache entries
